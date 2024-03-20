@@ -3,47 +3,51 @@ const path = require('path');
 
 const directoryPath = './designPatterns';
 
-function listJavaScriptFilesInDirectory(directoryPath) {
-    return fs.readdirSync(directoryPath).filter(file => path.extname(file) === '.js');
+function listFoldersInDirectory(directoryPath) {
+    return fs.readdirSync(directoryPath).filter(file => fs.statSync(path.join(directoryPath, file)).isDirectory());
 }
 
-function displayMenu(files) {
+function displayMenu(folders) {
     console.log("Menu:");
-    files.forEach((file, index) => {
-        console.log(`${index + 1}. ${file}`);
+    folders.forEach((folder, index) => {
+        console.log(`${index + 1}. ${folder}`);
     });
-    console.log(`${files.length + 1}. Exit`);
+    console.log(`${folders.length + 1}. Exit`);
 }
 
-function handleUserInput(files) {
+function handleUserInput(folders) {
     const stdin = process.stdin;
     stdin.setEncoding('utf8');
 
     function handleInput(input) {
         const index = parseInt(input.trim());
-        if (index >= 1 && index <= files.length) {
-            const selectedFile = files[index - 1];
-            const filePath = path.join(__dirname, 'designPatterns', selectedFile);
-            require(filePath);
+        if (index >= 1 && index <= folders.length) {
+            const selectedFolder = folders[index - 1];
+            const folderPath = path.join(__dirname, 'designPatterns', selectedFolder);
+            const indexPath = path.join(folderPath, 'index.js');
+            if (fs.existsSync(indexPath)) {
+                require(indexPath);
+            } else {
+                console.log("index.js not found in selected folder.");
+            }
             stdin.removeListener('data', handleInput);
-        } else if (index === files.length + 1) {
+        } else if (index === folders.length + 1) {
             console.log("Exiting...");
             process.exit(0);
         } else {
             console.log("Invalid option, please select again");
-            displayMenu(files);
+            displayMenu(folders);
         }
     }
 
     stdin.on('data', handleInput);
 }
 
-
-
 function main() {
-    const files = listJavaScriptFilesInDirectory(directoryPath);
-    displayMenu(files);
-    handleUserInput(files);
+    const folders = listFoldersInDirectory(directoryPath);
+    displayMenu(folders);
+    handleUserInput(folders);
 }
 
 main();
+
